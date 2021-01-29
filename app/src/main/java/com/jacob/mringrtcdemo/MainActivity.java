@@ -81,7 +81,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClick(View view) {
-        startOutGoing();
+//        startOutGoing();
+        new Thread() {
+            @Override
+            public void run() {
+                MClientScocektManager.getInstance().startConnect();
+            }
+        }.start();
     }
 
     private void startOutGoing() {
