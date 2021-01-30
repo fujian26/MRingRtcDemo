@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -81,13 +82,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClick(View view) {
-//        startOutGoing();
-        new Thread() {
-            @Override
-            public void run() {
-                MClientScocektManager.getInstance().startConnect();
-            }
-        }.start();
+        startActivity(new Intent(this, OutgoingActivity.class));
     }
 
     private void startOutGoing() {
@@ -214,5 +209,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    public void onClick2(View view) {
+        startActivity(new Intent(this, IncommingActivity.class));
     }
 }

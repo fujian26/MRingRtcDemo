@@ -15,5 +15,4 @@ public class DataUtil {
                 | (0x000000ff & (bytes[offset + 3]));
 
     }
-
 }
