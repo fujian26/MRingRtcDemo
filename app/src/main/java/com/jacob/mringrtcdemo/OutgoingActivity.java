@@ -175,6 +175,7 @@ public class OutgoingActivity extends AppCompatActivity {
 
                 @Override
                 public void onSendHangup(CallId callId, Remote remote, Integer integer, Boolean aBoolean, CallManager.HangupType hangupType, Integer integer1, Boolean aBoolean1) {
+                    Log.d(TAG, "onSendHangup hangupType " + hangupType);
                     callExecutor.execute(new Runnable() {
                         @Override
                         public void run() {
