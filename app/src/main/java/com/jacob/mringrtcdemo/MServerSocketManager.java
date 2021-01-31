@@ -9,6 +9,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MServerSocketManager {
 
@@ -44,6 +46,26 @@ public class MServerSocketManager {
 
     public void unRegisterListener() {
         this.listener = null;
+    }
+
+    public void close() {
+        if (ss != null) {
+            try {
+                ss.close();
+                ss = null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (socket != null) {
+            try {
+                socket.close();
+                socket = null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void startServer() {
@@ -93,6 +115,8 @@ public class MServerSocketManager {
                     index += identiKey.length;
 
                     listener.onOffer(opaque, sdp, identiKey);
+                } else if (type == MConstant.Socket.SEND_ICECANDIDATES) {
+                    receiveIceCandidates(bytes);
                 }
             }
 
@@ -144,6 +168,103 @@ public class MServerSocketManager {
 
             os.write(writeBytes, 0, index);
             os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendIceCandidates(List<byte[]> opaques, List<String> sdps) {
+
+        if (socket == null || socket.isClosed()) {
+            Log.e(TAG, "sendIceCandidates: socket == null || socket.isClosed()");
+            return;
+        }
+
+        try {
+            OutputStream os = socket.getOutputStream();
+
+            int index = 0;
+            writeBytes[0] = MConstant.Socket.SEND_ICECANDIDATES;
+            index++;
+
+            // opaque
+            byte[] opaqueSize = DataUtil.obtainBigend4Bytes(opaques.size());
+            System.arraycopy(opaqueSize, 0, writeBytes, index, opaqueSize.length);
+            index += opaqueSize.length;
+
+            for (int i = 0; i < opaques.size(); i++) {
+                byte[] opaque = opaques.get(i);
+                byte[] opaqueLength = DataUtil.obtainBigend4Bytes(opaque.length);
+                System.arraycopy(opaqueLength, 0, writeBytes, index, opaqueLength.length);
+                index += opaqueLength.length;
+                System.arraycopy(opaque, 0, writeBytes, index, opaque.length);
+                index += opaque.length;
+            }
+
+            // sdp
+            byte[] sdpSize = DataUtil.obtainBigend4Bytes(sdps.size());
+            System.arraycopy(sdpSize, 0, writeBytes, index, sdpSize.length);
+            index += sdpSize.length;
+
+            for (int i = 0; i < sdps.size(); i++) {
+                byte[] sdpBytes = sdps.get(i).getBytes("utf-8");
+                byte[] sdpLength = DataUtil.obtainBigend4Bytes(sdpBytes.length);
+                System.arraycopy(sdpLength, 0, writeBytes, index, sdpLength.length);
+                index += sdpLength.length;
+                System.arraycopy(sdpBytes, 0, writeBytes, index, sdpBytes.length);
+                index += sdpBytes.length;
+            }
+
+            Log.d(TAG, "sendIceCandidates total index " + index);
+
+            os.write(writeBytes, 0, index);
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void receiveIceCandidates(byte[] bytes) {
+
+        if (socket == null || socket.isClosed()) {
+            Log.e(TAG, "receiveIceCandidates: socket == null || socket.isClosed()");
+            return;
+        }
+
+        int index = 1;
+
+        try {
+            int opaqueSize = DataUtil.assempleLength(bytes, index);
+            index += 4;
+            Log.d(TAG, "receiveIceCandidates opaqueSize " + opaqueSize);
+            List<byte[]> opaques = new ArrayList<>();
+            for (int i = 0; i < opaqueSize; i++) {
+                int opaqueLength = DataUtil.assempleLength(bytes, index);
+                index += 4;
+                byte[] opaque = new byte[opaqueLength];
+                System.arraycopy(bytes, index, opaque, 0, opaqueLength);
+                index += opaque.length;
+                opaques.add(opaque);
+            }
+
+            int sdpSize = DataUtil.assempleLength(bytes, index);
+            index += 4;
+            List<String> sdps = new ArrayList<>();
+            for (int i = 0; i < sdpSize; i++) {
+                int sdpLength = DataUtil.assempleLength(bytes, index);
+                index += 4;
+                byte[] sdpBytes = new byte[sdpLength];
+                System.arraycopy(bytes, index, sdpBytes, 0, sdpLength);
+                index += sdpBytes.length;
+                String sdp = new String(sdpBytes, "utf-8");
+                sdps.add(sdp);
+
+                Log.d(TAG, "receiveIceCandidates sdp " + sdp);
+            }
+
+            Log.d(TAG, "receiveIceCandidates opaques size " + opaques.size() + ", sdp size " + sdps.size());
+
+            listener.onIceCandidates(opaques, sdps);
         } catch (IOException e) {
             e.printStackTrace();
         }

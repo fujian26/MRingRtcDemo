@@ -1,13 +1,14 @@
 package com.jacob.mringrtcdemo;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 
-import java.util.concurrent.Executor;
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -59,6 +60,29 @@ public class OutgoingActivity extends AppCompatActivity {
                 Log.d(TAG, "onAnswer, opaque: " + Base64.encodeToString(opaque, Base64.NO_WRAP)
                         + "\nsdp: " + sdp
                         + "\nidentiKey " + Base64.encodeToString(identiKey, Base64.NO_WRAP));
+
+                List<byte[]> opaques = new ArrayList<>();
+                opaques.add(new byte[]{(byte) 0x11, (byte) 0x55});
+                opaques.add(new byte[]{(byte) 0xee, (byte) 0x66});
+                opaques.add(new byte[]{(byte) 0x14, (byte) 0x77});
+
+                List<String> sdps = new ArrayList<>();
+                sdps.add("sdp one from client");
+                sdps.add("sdp two from client");
+                sdps.add("sdp three from client");
+                sdps.add("sdp four from client");
+
+                executorService.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        MClientScocektManager.getInstance().sendIceCandidates(opaques, sdps);
+                    }
+                });
+            }
+
+            @Override
+            public void onIceCandidates(List<byte[]> opaques, List<String> sdps) {
+                Log.d(TAG, "onIceCandidates opaques size " + opaques.size() + ", sdps size " + sdps.size());
             }
         });
     }
@@ -76,5 +100,6 @@ public class OutgoingActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         MClientScocektManager.getInstance().unRegisterListener();
+        MClientScocektManager.getInstance().closeSocket();
     }
 }

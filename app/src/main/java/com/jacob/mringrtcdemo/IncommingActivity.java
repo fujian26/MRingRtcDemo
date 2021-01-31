@@ -1,11 +1,13 @@
 package com.jacob.mringrtcdemo;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,6 +54,27 @@ public class IncommingActivity extends AppCompatActivity {
             public void onAnswer(byte[] opaque, String sdp, byte[] identiKey) {
 
             }
+
+            @Override
+            public void onIceCandidates(List<byte[]> opaques, List<String> sdps) {
+
+                Log.d(TAG, "onIceCandidates opaques size " + opaques.size() + ", sdps size " + sdps.size());
+
+                List<byte[]> opaquesSend = new ArrayList<>();
+                opaquesSend.add(new byte[]{(byte) 0x03, (byte) 0x78});
+
+                List<String> sdpsSend = new ArrayList<>();
+                sdpsSend.add("sdp one from server");
+                sdpsSend.add("sdp two from server");
+
+                executorService.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        MServerSocketManager.getInstance().sendIceCandidates(opaquesSend, sdpsSend);
+                    }
+                });
+
+            }
         });
 
         new Thread() {
@@ -66,5 +89,6 @@ public class IncommingActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         MServerSocketManager.getInstance().unRegisterListener();
+        MServerSocketManager.getInstance().close();
     }
 }
