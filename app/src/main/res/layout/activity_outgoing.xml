@@ -14,4 +14,15 @@
         android:onClick="startCall"
         android:text="拨打" />
 
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/sv_remote"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" />
+
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/sv_local"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_marginTop="16dp" />
+
 </LinearLayout>

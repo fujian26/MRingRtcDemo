@@ -2,8 +2,6 @@ package com.jacob.mringrtcdemo;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 /**
  * Example local unit test, which will execute on the development machine (host).
  *
@@ -12,6 +10,13 @@ import static org.junit.Assert.*;
 public class ExampleUnitTest {
     @Test
     public void addition_isCorrect() {
-        assertEquals(4, 2 + 2);
+
+        byte[] bytes = DataUtil.obtainBigend8Bytes(Long.parseLong("2f4859f33667c23d", 16));
+        StringBuilder builder = new StringBuilder();
+        for (byte bb: bytes) {
+            builder.append(String.format("%02x", bb));
+        }
+        System.out.println(builder.toString());
+        System.out.println(Long.parseLong(builder.toString(), 16));
     }
 }

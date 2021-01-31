@@ -69,6 +69,9 @@ public class MClientScocektManager {
 
                 if (type == MConstant.Socket.SEND_ANSWER) {
 
+                    long callId = DataUtil.assempleLong(bytes, index);
+                    index += 8;
+
                     int opaqueLength = DataUtil.assempleLength(bytes, index);
                     index += 4;
                     Log.d(TAG, "startConnect receive answer opaqueLength " + opaqueLength);
@@ -77,13 +80,16 @@ public class MClientScocektManager {
                     index += opaque.length;
 
                     int sdpLength = DataUtil.assempleLength(bytes, index);
+                    String sdp = null;
                     index += 4;
                     Log.d(TAG, "startConnect receive offer sdpLength " + sdpLength);
-                    byte[] sdpBytes = new byte[sdpLength];
-                    System.arraycopy(bytes, index, sdpBytes, 0, sdpLength);
-                    index += sdpBytes.length;
-                    String sdp = new String(sdpBytes, "utf-8");
-                    Log.d(TAG, "startConnect receive answer sdp " + sdp);
+                    if (sdpLength > 0) {
+                        byte[] sdpBytes = new byte[sdpLength];
+                        System.arraycopy(bytes, index, sdpBytes, 0, sdpLength);
+                        index += sdpBytes.length;
+                        sdp = new String(sdpBytes, "utf-8");
+                        Log.d(TAG, "startConnect receive answer sdp " + sdp);
+                    }
 
                     int identiKeyLength = DataUtil.assempleLength(bytes, index);
                     index += 4;
@@ -92,7 +98,7 @@ public class MClientScocektManager {
                     System.arraycopy(bytes, index, identiKey, 0, identiKeyLength);
                     index += identiKey.length;
 
-                    listener.onAnswer(opaque, sdp, identiKey);
+                    listener.onAnswer(callId, opaque, sdp, identiKey);
 
                 } else if (type == MConstant.Socket.SEND_ICECANDIDATES) {
                     receiveIceCandidates(bytes);
@@ -105,7 +111,7 @@ public class MClientScocektManager {
         }
     }
 
-    public void sendOfferInfo(byte[] opaque, String sdp, byte[] identiKey) {
+    public void sendOfferInfo(long callId, byte[] opaque, String sdp, byte[] identiKey) {
 
         if (socket == null || socket.isClosed()) {
             Log.e(TAG, "sendOfferInfo: socket == null || socket.isClosed()");
@@ -118,6 +124,10 @@ public class MClientScocektManager {
             int index = 0;
             writeBytes[0] = MConstant.Socket.SEND_OFFER;
             index++;
+
+            byte[] callIdBytes = DataUtil.obtainBigend8Bytes(callId);
+            System.arraycopy(callIdBytes, 0, writeBytes, index, callIdBytes.length);
+            index += callIdBytes.length;
 
             // opaque
             byte[] opaqueLength = DataUtil.obtainBigend4Bytes(opaque.length);
@@ -163,7 +173,7 @@ public class MClientScocektManager {
         }
     }
 
-    public void sendIceCandidates(List<byte[]> opaques, List<String> sdps) {
+    public void sendIceCandidates(long callId, List<byte[]> opaques, List<String> sdps) {
 
         if (socket == null || socket.isClosed()) {
             Log.e(TAG, "sendIceCandidates: socket == null || socket.isClosed()");
@@ -176,6 +186,10 @@ public class MClientScocektManager {
             int index = 0;
             writeBytes[0] = MConstant.Socket.SEND_ICECANDIDATES;
             index++;
+
+            byte[] callIdBytes = DataUtil.obtainBigend8Bytes(callId);
+            System.arraycopy(callIdBytes, 0, writeBytes, index, callIdBytes.length);
+            index += callIdBytes.length;
 
             // opaque
             byte[] opaqueSize = DataUtil.obtainBigend4Bytes(opaques.size());
@@ -224,6 +238,10 @@ public class MClientScocektManager {
         int index = 1;
 
         try {
+
+            long callId = DataUtil.assempleLong(bytes, index);
+            index += 8;
+
             int opaqueSize = DataUtil.assempleLength(bytes, index);
             index += 4;
             Log.d(TAG, "receiveIceCandidates opaqueSize " + opaqueSize);
@@ -254,7 +272,7 @@ public class MClientScocektManager {
 
             Log.d(TAG, "receiveIceCandidates opaques size " + opaques.size() + ", sdp size " + sdps.size());
 
-            listener.onIceCandidates(opaques, sdps);
+            listener.onIceCandidates(callId, opaques, sdps);
         } catch (IOException e) {
             e.printStackTrace();
         }

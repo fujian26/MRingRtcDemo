@@ -6,9 +6,9 @@ public interface MSocketListener {
 
     void onConnectResult(boolean conneced);
 
-    void onOffer(byte[] opaque, String sdp, byte[] identiKey);
+    void onOffer(long callId, byte[] opaque, String sdp, byte[] identiKey);
 
-    void onAnswer(byte[] opaque, String sdp, byte[] identiKey);
+    void onAnswer(long callId, byte[] opaque, String sdp, byte[] identiKey);
 
-    void onIceCandidates(List<byte[]> opaques, List<String> sdps);
+    void onIceCandidates(long callId, List<byte[]> opaques, List<String> sdps);
 }

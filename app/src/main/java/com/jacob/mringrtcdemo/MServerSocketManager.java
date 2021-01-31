@@ -91,6 +91,10 @@ public class MServerSocketManager {
                 Log.d(TAG, "receive first " + type);
 
                 if (type == MConstant.Socket.SEND_OFFER) {
+
+                    long callId = DataUtil.assempleLong(bytes, index);
+                    index += 8;
+
                     int opaqueLength = DataUtil.assempleLength(bytes, index);
                     index += 4;
                     Log.d(TAG, "startServer receive offer opaqueLength " + opaqueLength);
@@ -114,7 +118,7 @@ public class MServerSocketManager {
                     System.arraycopy(bytes, index, identiKey, 0, identiKeyLength);
                     index += identiKey.length;
 
-                    listener.onOffer(opaque, sdp, identiKey);
+                    listener.onOffer(callId, opaque, sdp, identiKey);
                 } else if (type == MConstant.Socket.SEND_ICECANDIDATES) {
                     receiveIceCandidates(bytes);
                 }
@@ -126,7 +130,7 @@ public class MServerSocketManager {
         }
     }
 
-    public void sendAnwserInfo(byte[] opaque, String sdp, byte[] identiKey) {
+    public void sendAnwserInfo(long callId, byte[] opaque, String sdp, byte[] identiKey) {
 
         if (socket == null || socket.isClosed()) {
             Log.e(TAG, "sendAnwserInfo: socket == null || socket.isClosed()");
@@ -140,6 +144,10 @@ public class MServerSocketManager {
             writeBytes[0] = MConstant.Socket.SEND_ANSWER;
             index++;
 
+            byte[] callIdBytes = DataUtil.obtainBigend8Bytes(callId);
+            System.arraycopy(callIdBytes, 0, writeBytes, index, callIdBytes.length);
+            index += callIdBytes.length;
+
             // opaque
             byte[] opaqueLength = DataUtil.obtainBigend4Bytes(opaque.length);
             System.arraycopy(opaqueLength, 0, writeBytes, index, opaqueLength.length);
@@ -150,13 +158,20 @@ public class MServerSocketManager {
             Log.d(TAG, "sendAnwserInfo opaque.length " + opaque.length);
 
             // sdp
-            byte[] sdpBytes = sdp.getBytes("utf-8");
-            byte[] sdpLength = DataUtil.obtainBigend4Bytes(sdpBytes.length);
-            System.arraycopy(sdpLength, 0, writeBytes, index, sdpLength.length);
-            index += sdpLength.length;
-            System.arraycopy(sdpBytes, 0, writeBytes, index, sdpBytes.length);
-            index += sdpBytes.length;
-            Log.d(TAG, "sendAnwserInfo sdpBytes.length " + sdpBytes.length);
+            if (sdp != null) {
+                byte[] sdpBytes = sdp.getBytes("utf-8");
+                byte[] sdpLength = DataUtil.obtainBigend4Bytes(sdpBytes.length);
+                System.arraycopy(sdpLength, 0, writeBytes, index, sdpLength.length);
+                index += sdpLength.length;
+                System.arraycopy(sdpBytes, 0, writeBytes, index, sdpBytes.length);
+                index += sdpBytes.length;
+                Log.d(TAG, "sendAnwserInfo sdpBytes.length " + sdpBytes.length);
+            } else {
+                byte[] sdpLength = DataUtil.obtainBigend4Bytes(0);
+                System.arraycopy(sdpLength, 0, writeBytes, index, sdpLength.length);
+                index += sdpLength.length;
+                Log.d(TAG, "sendAnwserInfo sdpBytes.length 0");
+            }
 
             // identiKey
             byte[] identiKeyLength = DataUtil.obtainBigend4Bytes(identiKey.length);
@@ -173,7 +188,7 @@ public class MServerSocketManager {
         }
     }
 
-    public void sendIceCandidates(List<byte[]> opaques, List<String> sdps) {
+    public void sendIceCandidates(long callId, List<byte[]> opaques, List<String> sdps) {
 
         if (socket == null || socket.isClosed()) {
             Log.e(TAG, "sendIceCandidates: socket == null || socket.isClosed()");
@@ -186,6 +201,10 @@ public class MServerSocketManager {
             int index = 0;
             writeBytes[0] = MConstant.Socket.SEND_ICECANDIDATES;
             index++;
+
+            byte[] callIdBytes = DataUtil.obtainBigend8Bytes(callId);
+            System.arraycopy(callIdBytes, 0, writeBytes, index, callIdBytes.length);
+            index += callIdBytes.length;
 
             // opaque
             byte[] opaqueSize = DataUtil.obtainBigend4Bytes(opaques.size());
@@ -234,6 +253,10 @@ public class MServerSocketManager {
         int index = 1;
 
         try {
+
+            long callId = DataUtil.assempleLong(bytes, index);
+            index += 8;
+
             int opaqueSize = DataUtil.assempleLength(bytes, index);
             index += 4;
             Log.d(TAG, "receiveIceCandidates opaqueSize " + opaqueSize);
@@ -264,7 +287,7 @@ public class MServerSocketManager {
 
             Log.d(TAG, "receiveIceCandidates opaques size " + opaques.size() + ", sdp size " + sdps.size());
 
-            listener.onIceCandidates(opaques, sdps);
+            listener.onIceCandidates(callId, opaques, sdps);
         } catch (IOException e) {
             e.printStackTrace();
         }
