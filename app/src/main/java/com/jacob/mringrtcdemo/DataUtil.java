@@ -23,7 +23,20 @@ public class DataUtil {
 
     public static List<PeerConnection.IceServer> obtainIceServers() {
         List<PeerConnection.IceServer> iceServers = new ArrayList<>();
+
         PeerConnection.IceServer iceServer = new PeerConnection.IceServer("stun:stun1.l.google.com:19302");
+        iceServers.add(iceServer);
+
+        iceServer = new PeerConnection.IceServer("turn:turn2.voip.signal.org", "1612170779:333426565",
+                "DLRxaDjfcDlu9BGlckMfh051Cnw=");
+        iceServers.add(iceServer);
+
+        iceServer = new PeerConnection.IceServer("turn:turn2.voip.signal.org:443?transport=udp", "1612170779:333426565",
+                "DLRxaDjfcDlu9BGlckMfh051Cnw=");
+        iceServers.add(iceServer);
+
+        iceServer = new PeerConnection.IceServer("turn:turn2.voip.signal.org:80?transport=tcp", "1612170779:333426565",
+                "DLRxaDjfcDlu9BGlckMfh051Cnw=");
         iceServers.add(iceServer);
 
         return iceServers;
