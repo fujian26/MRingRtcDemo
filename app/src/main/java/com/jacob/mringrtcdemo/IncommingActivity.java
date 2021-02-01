@@ -35,8 +35,8 @@ public class IncommingActivity extends AppCompatActivity {
     private EglBase eglBase;
     private CallManager callManager;
 
-    private static final String privateIdentiKey = "GH/IFK7exIFO2M7+ogHCSGNCKyI+guETBV4SyMwo+Gk=";
-    private static final String publicIdentiKey = "BTn1f1xCcea/vx2/C9gJb3Jr84NmjOpJAcp/V9Rr3Eo4";
+    private static final String privateIdentiKey = "APOh3/WmpshY+8AInd2ae1JV08IhlrcRyenFa4Oe2Wc=";
+    private static final String publicIdentiKey = "BSFu85xmiH2DaSDoQzqdVzfW+K4dQp+IFgDzioX4QxwU";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,17 +100,27 @@ public class IncommingActivity extends AppCompatActivity {
 
                 @Override
                 public void onCallEvent(Remote remote, CallManager.CallEvent callEvent) {
-
+                    Log.d(TAG, "onCallEvent  event = " + callEvent.name());
+                    callExecutor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                callManager.acceptCall(((RemotePeer) remote).getCallId());
+                            } catch (CallException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
                 }
 
                 @Override
                 public void onCallConcluded(Remote remote) {
-
+                    Log.d(TAG, "onCallConcluded  ");
                 }
 
                 @Override
                 public void onSendOffer(CallId callId, Remote remote, Integer integer, Boolean aBoolean, @Nullable byte[] bytes, @Nullable String s, CallManager.CallMediaType callMediaType) {
-
+                    Log.d(TAG, "onSendOffer callId = " + callId);
                 }
 
                 @Override
@@ -139,7 +149,7 @@ public class IncommingActivity extends AppCompatActivity {
 
                 @Override
                 public void onSendIceCandidates(CallId callId, Remote remote, Integer integer, Boolean aBoolean, List<IceCandidate> list) {
-
+                    Log.d(TAG, "onSendIceCandidates callId = " + callId);
                     if (list == null || list.isEmpty()) {
                         Log.e(TAG, "onSendIceCandidates list == null || list.isEmpty()");
                         return;
@@ -176,6 +186,7 @@ public class IncommingActivity extends AppCompatActivity {
 
                 @Override
                 public void onSendHangup(CallId callId, Remote remote, Integer integer, Boolean aBoolean, CallManager.HangupType hangupType, Integer integer1, Boolean aBoolean1) {
+                    Log.d(TAG, "onSendHangup callId = " + callId);
                     callExecutor.execute(new Runnable() {
                         @Override
                         public void run() {
@@ -190,17 +201,17 @@ public class IncommingActivity extends AppCompatActivity {
 
                 @Override
                 public void onSendBusy(CallId callId, Remote remote, Integer integer, Boolean aBoolean) {
-
+                    Log.d(TAG, "onSendBusy callId = " + callId);
                 }
 
                 @Override
                 public void onSendCallMessage(@NonNull UUID uuid, @NonNull byte[] bytes) {
-
+                    Log.d(TAG, "onSendCallMessage");
                 }
 
                 @Override
                 public void onSendHttpRequest(long l, @NonNull String s, @NonNull CallManager.HttpMethod httpMethod, @Nullable List<HttpHeader> list, @Nullable byte[] bytes) {
-
+                    Log.d(TAG, "onSendHttpRequest");
                 }
             });
         } catch (CallException e) {
@@ -224,7 +235,7 @@ public class IncommingActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         try {
-                            callManager.receivedOffer(new CallId(callId), new Remote() {
+                            callManager.receivedOffer(new CallId(callId), new RemotePeer(new CallId(callId)) {
                                         @Override
                                         public boolean recipientEquals(Remote remote) {
                                             return false;
@@ -240,7 +251,7 @@ public class IncommingActivity extends AppCompatActivity {
 
             @Override
             public void onAnswer(long callId, byte[] opaque, String sdp, byte[] identiKey) {
-
+                Log.d(TAG, "onAnswer callId = " + callId);
             }
 
             @Override
