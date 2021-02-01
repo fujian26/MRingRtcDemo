@@ -18,6 +18,7 @@ import org.signal.ringrtc.Remote;
 import org.webrtc.CapturerObserver;
 import org.webrtc.EglBase;
 import org.webrtc.SurfaceViewRenderer;
+import org.webrtc.VideoFrame;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,16 +28,18 @@ import java.util.concurrent.Executors;
 
 public class IncommingActivity extends AppCompatActivity {
 
-    private final String TAG = IncommingActivity.class.getSimpleName();
+    private final String TAG = "" + IncommingActivity.class.getSimpleName();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final ExecutorService callExecutor = Executors.newSingleThreadExecutor();
 
     private SurfaceViewRenderer svRemote, svLocal;
     private EglBase eglBase;
+    private Camera camera;
     private CallManager callManager;
 
     private static final String privateIdentiKey = "APOh3/WmpshY+8AInd2ae1JV08IhlrcRyenFa4Oe2Wc=";
     private static final String publicIdentiKey = "BSFu85xmiH2DaSDoQzqdVzfW+K4dQp+IFgDzioX4QxwU";
+    private long mCallId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +54,29 @@ public class IncommingActivity extends AppCompatActivity {
         svRemote.setKeepScreenOn(true);
         svLocal.init(eglBase.getEglBaseContext(), null);
         svLocal.setKeepScreenOn(true);
+
+        camera = new Camera(this, new CameraEventListener() {
+            @Override
+            public void onCameraSwitchCompleted(@NonNull CameraState newCameraState) {
+
+            }
+        }, eglBase, CameraState.Direction.BACK);
+
+//        camera.initCapturer(new CapturerObserver() {
+//            @Override
+//            public void onFrameCaptured(VideoFrame videoFrame) {
+//                svLocal.onFrame(videoFrame);
+//            }
+//
+//            @Override
+//            public void onCapturerStarted(boolean success) {
+//            }
+//
+//            @Override
+//            public void onCapturerStopped() {
+//            }
+//        });
+//        camera.setEnabled(true);
 
         initListeners();
     }
@@ -69,27 +95,8 @@ public class IncommingActivity extends AppCompatActivity {
                         public void run() {
                             try {
                                 callManager.proceed(callId, IncommingActivity.this, eglBase, svLocal, svRemote,
-                                        new CameraControl() {
-                                            @Override
-                                            public boolean hasCapturer() {
-                                                return true;
-                                            }
-
-                                            @Override
-                                            public void initCapturer(@NonNull CapturerObserver capturerObserver) {
-
-                                            }
-
-                                            @Override
-                                            public void setEnabled(boolean b) {
-
-                                            }
-
-                                            @Override
-                                            public void flip() {
-
-                                            }
-                                        }, DataUtil.obtainIceServers(), false, true);
+                                        camera, DataUtil.obtainIceServers(), false, true);
+                                camera.setEnabled(true);
                             } catch (CallException e) {
                                 e.printStackTrace();
                             }
@@ -101,11 +108,19 @@ public class IncommingActivity extends AppCompatActivity {
                 @Override
                 public void onCallEvent(Remote remote, CallManager.CallEvent callEvent) {
                     Log.d(TAG, "onCallEvent  event = " + callEvent.name());
+                    if (callEvent != CallManager.CallEvent.LOCAL_RINGING) {
+                        return;
+                    }
                     callExecutor.execute(new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                callManager.acceptCall(((RemotePeer) remote).getCallId());
+                                callManager.setCommunicationMode();
+                                callManager.setAudioEnable(true);
+                                callManager.setVideoEnable(true);
+                                callManager.setLowBandwidthMode(false);
+
+                                callManager.acceptCall(new CallId(mCallId));
                             } catch (CallException e) {
                                 e.printStackTrace();
                             }
@@ -148,8 +163,8 @@ public class IncommingActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onSendIceCandidates(CallId callId, Remote remote, Integer integer, Boolean aBoolean, List<IceCandidate> list) {
-                    Log.d(TAG, "onSendIceCandidates callId = " + callId);
+                public void onSendIceCandidates(CallId callId, Remote remote, Integer remoteDeviceId, Boolean aBoolean, List<IceCandidate> list) {
+                    Log.d(TAG, "onSendIceCandidates callId = " + callId + " remoteDeviceId = " + remoteDeviceId + " bool = " + aBoolean);
                     if (list == null || list.isEmpty()) {
                         Log.e(TAG, "onSendIceCandidates list == null || list.isEmpty()");
                         return;
@@ -226,6 +241,7 @@ public class IncommingActivity extends AppCompatActivity {
 
             @Override
             public void onOffer(long callId, byte[] opaque, String sdp, byte[] identiKey) {
+                mCallId = callId;
                 Log.d(TAG, "onOffer "
                         + "\nsdp: " + sdp
                         + "\nidentiKey " + Base64.encodeToString(identiKey, Base64.NO_WRAP)
@@ -235,7 +251,7 @@ public class IncommingActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         try {
-                            callManager.receivedOffer(new CallId(callId), new RemotePeer(new CallId(callId)) {
+                            callManager.receivedOffer(new CallId(callId), new Remote() {
                                         @Override
                                         public boolean recipientEquals(Remote remote) {
                                             return false;
@@ -292,8 +308,24 @@ public class IncommingActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        callExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    callManager.close();
+                } catch (CallException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        camera.dispose();
         MServerSocketManager.getInstance().unRegisterListener();
         MServerSocketManager.getInstance().close();
     }
