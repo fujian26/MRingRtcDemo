@@ -11,14 +11,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallId;
 import org.signal.ringrtc.CallManager;
-import org.signal.ringrtc.CameraControl;
 import org.signal.ringrtc.HttpHeader;
 import org.signal.ringrtc.IceCandidate;
 import org.signal.ringrtc.Remote;
-import org.webrtc.CapturerObserver;
 import org.webrtc.EglBase;
 import org.webrtc.SurfaceViewRenderer;
-import org.webrtc.VideoFrame;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +57,7 @@ public class IncommingActivity extends AppCompatActivity {
             public void onCameraSwitchCompleted(@NonNull CameraState newCameraState) {
 
             }
-        }, eglBase, CameraState.Direction.BACK);
+        }, eglBase, CameraState.Direction.FRONT);
 
 //        camera.initCapturer(new CapturerObserver() {
 //            @Override

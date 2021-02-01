@@ -48,7 +48,7 @@ public class MClientScocektManager {
     public void startConnect() {
 
         try {
-            socket = new Socket("192.168.2.10", 8083);
+            socket = new Socket("192.168.20.63", 8083);
             Log.d(TAG, "startConnect: isconnected " + socket.isConnected());
 
             listener.onConnectResult(socket.isConnected());
@@ -116,6 +116,12 @@ public class MClientScocektManager {
         if (socket == null || socket.isClosed()) {
             Log.e(TAG, "sendOfferInfo: socket == null || socket.isClosed()");
             return;
+        }
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         try {
