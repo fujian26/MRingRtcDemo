@@ -15,10 +15,8 @@ import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.HttpHeader;
 import org.signal.ringrtc.IceCandidate;
 import org.signal.ringrtc.Remote;
-import org.webrtc.CapturerObserver;
 import org.webrtc.EglBase;
 import org.webrtc.SurfaceViewRenderer;
-import org.webrtc.VideoFrame;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,28 +52,34 @@ public class OutgoingActivity extends AppCompatActivity {
         localSv.init(eglBase.getEglBaseContext(), null);
         localSv.setKeepScreenOn(true);
 
-        camera = new Camera(this, new CameraEventListener() {
+        camera = new Camera(OutgoingActivity.this, new CameraEventListener() {
             @Override
             public void onCameraSwitchCompleted(@NonNull CameraState newCameraState) {
 
             }
         }, eglBase, CameraState.Direction.FRONT);
 
-        camera.initCapturer(new CapturerObserver() {
-            @Override
-            public void onFrameCaptured(VideoFrame videoFrame) {
-                localSv.onFrame(videoFrame);
-            }
-
-            @Override
-            public void onCapturerStarted(boolean success) {
-            }
-
-            @Override
-            public void onCapturerStopped() {
-            }
-        });
-        camera.setEnabled(true);
+//        callExecutor.execute(new Runnable() {
+//            @Override
+//            public void run() {
+//
+//                camera.initCapturer(new CapturerObserver() {
+//                    @Override
+//                    public void onFrameCaptured(VideoFrame videoFrame) {
+//                        localSv.onFrame(videoFrame);
+//                    }
+//
+//                    @Override
+//                    public void onCapturerStarted(boolean success) {
+//                    }
+//
+//                    @Override
+//                    public void onCapturerStopped() {
+//                    }
+//                });
+//                camera.setEnabled(true);
+//            }
+//        });
 
         initListeners();
     }
@@ -95,6 +99,7 @@ public class OutgoingActivity extends AppCompatActivity {
                             try {
                                 callManager.proceed(callId, OutgoingActivity.this, eglBase, localSv, remoteSv,
                                         camera, DataUtil.obtainIceServers(), false, true);
+                                camera.setEnabled(true);
                             } catch (CallException e) {
                                 e.printStackTrace();
                             }
