@@ -45,10 +45,10 @@ public class MClientScocektManager {
         this.listener = null;
     }
 
-    public void startConnect() {
+    public void startConnect(String ip) {
 
         try {
-            socket = new Socket("192.168.20.63", 8083);
+            socket = new Socket(ip, 8083);
             Log.d(TAG, "startConnect: isconnected " + socket.isConnected());
 
             listener.onConnectResult(socket.isConnected());

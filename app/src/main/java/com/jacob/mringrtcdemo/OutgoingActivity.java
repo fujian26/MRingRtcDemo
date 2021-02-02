@@ -1,9 +1,12 @@
 package com.jacob.mringrtcdemo;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,6 +36,7 @@ public class OutgoingActivity extends AppCompatActivity {
     private EglBase eglBase;
     private CallManager callManager;
     private Camera camera;
+    private EditText etIp;
 
     private static final String privateIdentiKey = "YHr9+1aPZLd5xZ77zzll3y5+fMrzAPOWwKYgtxO+n34=";
     private static final String publicIdentiKey = "Bey65Z/fjKnQ3GtD/dSsyPd3iTCGDlEfqmPtusfUphBm";
@@ -44,6 +48,7 @@ public class OutgoingActivity extends AppCompatActivity {
 
         remoteSv = findViewById(R.id.sv_remote);
         localSv = findViewById(R.id.sv_local);
+        etIp = findViewById(R.id.et);
         eglBase = EglBase.create();
 
         remoteSv.init(eglBase.getEglBaseContext(), null);
@@ -300,10 +305,17 @@ public class OutgoingActivity extends AppCompatActivity {
     }
 
     public void startCall(View view) {
+
+        String ip = etIp.getText().toString().trim();
+        if (TextUtils.isEmpty(ip)) {
+            Toast.makeText(this, "ip为空", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         new Thread() {
             @Override
             public void run() {
-                MClientScocektManager.getInstance().startConnect();
+                MClientScocektManager.getInstance().startConnect(ip);
             }
         }.start();
 
